@@ -196,11 +196,11 @@ Resources:
             mysql -h ${MyRDSInstance.Endpoint.Address} -P 3306 -u ${DBUsername} -p${DBPassword} ${DBName} < /tmp/init.sql            
 
             # Set environment variables for SNS and SQS
-            # export SNS_TOPIC_ARN="${SlavaUploadsNotificationTopic.Arn}"
+            # export SNS_TOPIC_ARN="${SlavaUploadsNotificationTopic.TopicArn}"
             # export SQS_QUEUE_URL="${SlavaUploadsNotificationQueue}"
 
             # Write environment variables to a file for the Java app
-            # echo "SNS_TOPIC_ARN=${SlavaUploadsNotificationTopic.Arn}" >> /etc/environment
+            # echo "SNS_TOPIC_ARN=${SlavaUploadsNotificationTopic.TopicArn}" >> /etc/environment
             # echo "SQS_QUEUE_URL=${SlavaUploadsNotificationQueue}" >> /etc/environment
             # echo "AWS_REGION=${AWS::Region}" >> /etc/environment
 
@@ -208,7 +208,7 @@ Resources:
             aws s3 cp s3://demobucket-test-for-rds/simple-app.jar /project/
             # Start a process as ec2-user
             # su - ec2-user -c "nohup java -jar /project/simple-app.jar"
-            su - ec2-user -c "nohup java -DAWS_BUCKET_NAME=demobucket-test-for-rds -DAWS_BUCKET_REGION=${AWS::Region} -DAWS_DB_HOST=${MyRDSInstance.Endpoint.Address} -DAWS_DB_NAME=images -DAWS_DB_USERNAME=${DBUsername} -DAWS_DB_PASSWORD=${DBPassword} -DAWS_RESOURCES_REGION=${AWS::Region}  -DAWS_SNS_TOPIC_ARN=${SlavaUploadsNotificationTopic.Arn} -DAWS_RESOURCES_REGION=${AWS::Region} -DAWS_SQS_QUEUE_URL=${SlavaUploadsNotificationQueue} -Dserver.port=80 -jar /project/simple-app.jar"
+            su - ec2-user -c "nohup sudo java -DAWS_BUCKET_NAME=demobucket-test-for-rds -DAWS_BUCKET_REGION=${AWS::Region} -DAWS_DB_HOST=${MyRDSInstance.Endpoint.Address} -DAWS_DB_NAME=images -DAWS_DB_USERNAME=${DBUsername} -DAWS_DB_PASSWORD=${DBPassword} -DAWS_RESOURCES_REGION=${AWS::Region}  -DAWS_SNS_TOPIC_ARN=${SlavaUploadsNotificationTopic.TopicArn} -DAWS_RESOURCES_REGION=${AWS::Region} -DAWS_SQS_QUEUE_URL=${SlavaUploadsNotificationQueue} -Dserver.port=80 -jar /project/simple-app.jar"
   AutoScalingGroup:
     Type: 'AWS::AutoScaling::AutoScalingGroup'
     Properties:
@@ -362,12 +362,12 @@ Resources:
           - Effect: Allow
             Principal: "*"
             Action: "SNS:Publish"
-            Resource: !Ref SlavaUploadsNotificationTopic
+            Resource: !GetAtt SlavaUploadsNotificationTopic.TopicArn
 
   # SQS Subscription to SNS Topic
   SlavaUploadsNotificationSubscription:
     Type: AWS::SNS::Subscription
     Properties:
       Protocol: sqs
-      TopicArn: !Ref SlavaUploadsNotificationTopic
+      TopicArn: !GetAtt SlavaUploadsNotificationTopic.TopicArn
       Endpoint: !GetAtt SlavaUploadsNotificationQueue.Arn
