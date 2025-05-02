@@ -159,18 +159,23 @@ Resources:
             # Install Apache web server
             yum install java-11-amazon-corretto -y
             # Install Apache web server
-            yum install -y httpd
+            # yum install -y httpd
             # Start the Apache service
-            systemctl start httpd
-            systemctl enable httpd
+            # systemctl start httpd
+            # systemctl enable httpd
             # Create a health check endpoint
-            echo "<html><body><h1>Healthy</h1></body></html>" > /var/www/html/health
+            # echo "<html><body><h1>Healthy</h1></body></html>" > /var/www/html/health
             
             yum install -y mysql
             echo "MySQL client installed"
 
             # Create SQL script
             cat <<EOF > /tmp/init.sql
+            -- Create the database named 'images'
+            CREATE DATABASE IF NOT EXISTS images;
+
+            -- Use the 'images' database
+            USE images;
             create table image(
                 id				BIGINT			PRIMARY KEY AUTO_INCREMENT,
                 name			VARCHAR(20),
@@ -190,11 +195,20 @@ Resources:
             # Apply SQL script to the RDS database
             mysql -h ${MyRDSInstance.Endpoint.Address} -P 3306 -u ${DBUsername} -p${DBPassword} ${DBName} < /tmp/init.sql            
 
+            # Set environment variables for SNS and SQS
+            # export SNS_TOPIC_ARN="${SlavaUploadsNotificationTopic.Arn}"
+            # export SQS_QUEUE_URL="${SlavaUploadsNotificationQueue}"
+
+            # Write environment variables to a file for the Java app
+            # echo "SNS_TOPIC_ARN=${SlavaUploadsNotificationTopic.Arn}" >> /etc/environment
+            # echo "SQS_QUEUE_URL=${SlavaUploadsNotificationQueue}" >> /etc/environment
+            # echo "AWS_REGION=${AWS::Region}" >> /etc/environment
+
             mkdir /project
             aws s3 cp s3://demobucket-test-for-rds/simple-app.jar /project/
             # Start a process as ec2-user
             # su - ec2-user -c "nohup java -jar /project/simple-app.jar"
-
+            su - ec2-user -c "nohup java -DAWS_BUCKET_NAME=demobucket-test-for-rds -DAWS_BUCKET_REGION=${AWS::Region} -DAWS_DB_HOST=${MyRDSInstance.Endpoint.Address} -DAWS_DB_NAME=images -DAWS_DB_USERNAME=${DBUsername} -DAWS_DB_PASSWORD=${DBPassword} -DAWS_RESOURCES_REGION=${AWS::Region}  -DAWS_SNS_TOPIC_ARN=${SlavaUploadsNotificationTopic.Arn} -DAWS_RESOURCES_REGION=${AWS::Region} -DAWS_SQS_QUEUE_URL=${SlavaUploadsNotificationQueue} -Dserver.port=80 -jar /project/simple-app.jar"
   AutoScalingGroup:
     Type: 'AWS::AutoScaling::AutoScalingGroup'
     Properties:
@@ -316,3 +330,44 @@ Resources:
     # Properties:
       # Handle: !Ref RDSWaitHandle
       # Timeout: 300 # Wait up to 15 minutes for the signal
+      
+  # SQS Queue
+  SlavaUploadsNotificationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: Slava-UploadsNotificationQueue
+      VisibilityTimeout: 30 # Optional: Visibility timeout in seconds
+      Tags:
+        - Key: Name
+          Value: Slava-UploadsNotificationQueue
+
+  # SNS Topic
+  SlavaUploadsNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: Slava-UploadsNotificationTopic
+      Tags:
+        - Key: Name
+          Value: Slava-UploadsNotificationTopic
+
+  # SNS Topic Policy (Optional: To allow SQS to subscribe to the topic)
+  SlavaUploadsNotificationTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref SlavaUploadsNotificationTopic
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: "SNS:Publish"
+            Resource: !Ref SlavaUploadsNotificationTopic
+
+  # SQS Subscription to SNS Topic
+  SlavaUploadsNotificationSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      TopicArn: !Ref SlavaUploadsNotificationTopic
+      Endpoint: !GetAtt SlavaUploadsNotificationQueue.Arn
