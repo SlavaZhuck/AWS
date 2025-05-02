@@ -140,7 +140,7 @@ Resources:
       GroupId: !Ref SecurityGroup
   LaunchTemplate:
     Type: 'AWS::EC2::LaunchTemplate'
-    DependsOn: RDSWaitCondition  # Ensure EC2 is created after RDS
+    # DependsOn: RDSWaitCondition  # Ensure EC2 is created after RDS
     Properties:
       LaunchTemplateName: demo-launch-template
       LaunchTemplateData:
@@ -187,8 +187,6 @@ Resources:
             done
             echo "RDS instance is ready."
 
-            # Send signal to WaitConditionHandle
-            curl -X PUT -H "Content-Type:" --data-binary '{"Status": "SUCCESS", "Reason": "RDS is ready", "UniqueId": "RDSReadySignal", "Data": "RDS initialization complete"}' ${RDSWaitHandle}
             # Apply SQL script to the RDS database
             mysql -h ${MyRDSInstance.Endpoint.Address} -P 3306 -u ${DBUsername} -p${DBPassword} ${DBName} < /tmp/init.sql            
 
@@ -290,10 +288,10 @@ Resources:
       DBSubnetGroupName: !Ref MyDBSubnetGroup
       BackupRetentionPeriod: 1 # Free Tier allows backups with 1-day retention
       MultiAZ: false # Multi-AZ is not Free Tier eligible
-    CreationPolicy:
-      ResourceSignal:
-        Count: 1
-        Timeout: PT15M # Wait up to 15 minutes for the signal
+    # CreationPolicy:
+      # ResourceSignal:
+        # Count: 1
+        # Timeout: PT15M # Wait up to 15 minutes for the signal
         
   # RDS Subnet Group
   MyDBSubnetGroup:
@@ -308,13 +306,13 @@ Resources:
           Value: MyDBSubnetGroup
           
   # Wait Condition Handle
-  RDSWaitHandle:
-    Type: AWS::CloudFormation::WaitConditionHandle
+  # RDSWaitHandle:
+    # Type: AWS::CloudFormation::WaitConditionHandle
 
   # Wait Condition
-  RDSWaitCondition:
-    Type: AWS::CloudFormation::WaitCondition
-    DependsOn: MyRDSInstance
-    Properties:
-      Handle: !Ref RDSWaitHandle
-      Timeout: 300 # Wait up to 15 minutes for the signal
+  # RDSWaitCondition:
+    # Type: AWS::CloudFormation::WaitCondition
+    # DependsOn: MyRDSInstance
+    # Properties:
+      # Handle: !Ref RDSWaitHandle
+      # Timeout: 300 # Wait up to 15 minutes for the signal
