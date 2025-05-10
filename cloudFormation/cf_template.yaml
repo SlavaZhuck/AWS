@@ -150,7 +150,7 @@ Resources:
         SecurityGroupIds: ###!!!
           - !Ref SecurityGroup # Associate the EC2 instance with the Security Group
         IamInstanceProfile: 
-          Name: EC2_S3_FullAccess_Role
+          Name: EC2_S3_SNS_SQS_FullAccess_Role
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
