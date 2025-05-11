@@ -391,6 +391,7 @@ Resources:
           DB_HOST: !GetAtt MyRDSInstance.Endpoint.Address
           DB_USER: !Ref DBUsername
           DB_PASSWORD: !Ref DBPassword
+          DB_NAME: !Ref DBName # Use the correct database name
           TABLE_NAME: image
       VpcConfig: # Ensure Lambda is in the same VPC as RDS
         SubnetIds:
