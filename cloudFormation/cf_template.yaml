@@ -371,3 +371,114 @@ Resources:
       Protocol: sqs
       TopicArn: !GetAtt SlavaUploadsNotificationTopic.TopicArn
       Endpoint: !GetAtt SlavaUploadsNotificationQueue.Arn
+      
+      
+  # Lambda Function: DataConsistencyFunction
+  DataConsistencyFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: DataConsistencyFunction
+      Runtime: nodejs20.x
+      Role: !GetAtt ATLambdaRole.Arn
+      Handler: index.handler
+      Code:
+        S3Bucket: demobucket-test-for-rds
+        S3Key: secondLambda.zip
+      Timeout: 12
+      Environment:
+        Variables:
+          DB_HOST: !GetAtt MyRDSInstance.Endpoint.Address
+          DB_USER: !Ref DBUsername
+          DB_PASSWORD: !Ref DBPassword
+          TABLE_NAME: image
+
+  # Lambda Function: UploadsNotificationFunction
+  UploadsNotificationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: UploadsNotificationFunction
+      Runtime: nodejs20.x
+      Role: !GetAtt ATLambdaRole.Arn
+      Handler: firstLambda.handler
+      Code:
+        S3Bucket: demobucket-test-for-rds
+        S3Key: firstLambda.zip
+      Timeout: 12
+
+  # Lambda Permission for SQS Trigger (UploadsNotificationFunction)
+  UploadsNotificationFunctionSQSPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref UploadsNotificationFunction
+      Action: lambda:InvokeFunction
+      Principal: sqs.amazonaws.com
+      SourceArn: !GetAtt SlavaUploadsNotificationQueue.Arn
+
+  # SQS Trigger for Lambda (UploadsNotificationFunction)
+  UploadsNotificationFunctionSQSTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt SlavaUploadsNotificationQueue.Arn
+      FunctionName: !Ref UploadsNotificationFunction
+      BatchSize: 10
+      Enabled: true
+
+  # IAM Role for Lambda (if AT-LambdaRole needs updates)
+  ATLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AT-LambdaRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AmazonRDSFullAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - rds:*
+                Resource: "*"
+        - PolicyName: FullAccessPolicyS3
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource: "*"
+        - PolicyName: FullAccessPolicySNS_SQS
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:*
+                  - sqs:*
+                Resource: "*"
+        - PolicyName: Lambda_Full
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: lambda:*
+                Resource: "*"
+
+Outputs:
+  DataConsistencyFunctionName:
+    Description: Name of the DataConsistencyFunction Lambda function
+    Value: !Ref DataConsistencyFunction
+  DataConsistencyFunctionArn:
+    Description: ARN of the DataConsistencyFunction Lambda function
+    Value: !GetAtt DataConsistencyFunction.Arn
+  UploadsNotificationFunctionName:
+    Description: Name of the UploadsNotificationFunction Lambda function
+    Value: !Ref UploadsNotificationFunction
+  UploadsNotificationFunctionArn:
+    Description: ARN of the UploadsNotificationFunction Lambda function
+    Value: !GetAtt UploadsNotificationFunction.Arn
