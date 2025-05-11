@@ -302,6 +302,7 @@ Resources:
       DBSubnetGroupName: !Ref MyDBSubnetGroup
       BackupRetentionPeriod: 1 # Free Tier allows backups with 1-day retention
       MultiAZ: false # Multi-AZ is not Free Tier eligible
+      PubliclyAccessible: true # Ensure RDS is publicly accessible
     # CreationPolicy:
       # ResourceSignal:
         # Count: 1
@@ -391,7 +392,13 @@ Resources:
           DB_USER: !Ref DBUsername
           DB_PASSWORD: !Ref DBPassword
           TABLE_NAME: image
-
+      VpcConfig: # Ensure Lambda is in the same VPC as RDS
+        SubnetIds:
+          - !Ref PublicSubnetA
+          - !Ref PublicSubnetB
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        
   # Lambda Function: UploadsNotificationFunction
   UploadsNotificationFunction:
     Type: AWS::Lambda::Function
