@@ -114,30 +114,28 @@ Resources:
         Security Group for allowing access over HTTP/HTTPS from anywhere and
         allowing SSH connections from your IP address only
       VpcId: !Ref VPC
-  SecurityGroupIngressHttp:
-    Type: 'AWS::EC2::SecurityGroupIngress'
-    Properties:
-      IpProtocol: tcp
-      FromPort: 80
-      ToPort: 80
-      CidrIp: 0.0.0.0/0
-      GroupId: !Ref SecurityGroup
-  SecurityGroupIngressHttps:
-    Type: 'AWS::EC2::SecurityGroupIngress'
-    Properties:
-      IpProtocol: tcp
-      FromPort: 443
-      ToPort: 443
-      CidrIp: 0.0.0.0/0
-      GroupId: !Ref SecurityGroup
-  SecurityGroupIngressSSH:
-    Type: 'AWS::EC2::SecurityGroupIngress'
-    Properties:
-      IpProtocol: tcp
-      FromPort: 22
-      ToPort: 22
-      CidrIp: !Ref SSHLocation
-      GroupId: !Ref SecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHLocation
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0 # Allow RDS access from anywhere (adjust as needed)
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
   LaunchTemplate:
     Type: 'AWS::EC2::LaunchTemplate'
     # DependsOn: RDSWaitCondition  # Ensure EC2 is created after RDS
@@ -270,21 +268,6 @@ Resources:
           
 ########################################
 
-  # Security Group for RDS
-  MyRDSSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allow MySQL traffic from EC2
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
-          SourceSecurityGroupId: !Ref SecurityGroup
-      Tags:
-        - Key: Name
-          Value: MyRDSSecurityGroup
-
 
   # RDS MySQL Instance
   MyRDSInstance:
@@ -298,7 +281,7 @@ Resources:
       StorageType: gp2 # General Purpose SSD (Free Tier eligible)
       DBName: !Ref DBName
       VPCSecurityGroups:
-        - !Ref MyRDSSecurityGroup
+        - !Ref SecurityGroup
       DBSubnetGroupName: !Ref MyDBSubnetGroup
       BackupRetentionPeriod: 1 # Free Tier allows backups with 1-day retention
       MultiAZ: false # Multi-AZ is not Free Tier eligible
