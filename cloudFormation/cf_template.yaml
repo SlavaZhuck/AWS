@@ -349,12 +349,12 @@ Resources:
             Resource: !GetAtt SlavaUploadsNotificationTopic.TopicArn
 
   # SQS Subscription to SNS Topic
-  SlavaUploadsNotificationSubscription:
-    Type: AWS::SNS::Subscription
-    Properties:
-      Protocol: sqs
-      TopicArn: !GetAtt SlavaUploadsNotificationTopic.TopicArn
-      Endpoint: !GetAtt SlavaUploadsNotificationQueue.Arn
+  # SlavaUploadsNotificationSubscription:
+    # Type: AWS::SNS::Subscription
+    # Properties:
+      # Protocol: sqs
+      # TopicArn: !GetAtt SlavaUploadsNotificationTopic.TopicArn
+      # Endpoint: !GetAtt SlavaUploadsNotificationQueue.Arn
       
       
   # Lambda Function: DataConsistencyFunction
