@@ -426,6 +426,8 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: AmazonRDSFullAccess
           PolicyDocument:
@@ -472,16 +474,3 @@ Resources:
                   - ec2:UnassignPrivateIpAddresses
                 Resource: "*"
 
-Outputs:
-  DataConsistencyFunctionName:
-    Description: Name of the DataConsistencyFunction Lambda function
-    Value: !Ref DataConsistencyFunction
-  DataConsistencyFunctionArn:
-    Description: ARN of the DataConsistencyFunction Lambda function
-    Value: !GetAtt DataConsistencyFunction.Arn
-  UploadsNotificationFunctionName:
-    Description: Name of the UploadsNotificationFunction Lambda function
-    Value: !Ref UploadsNotificationFunction
-  UploadsNotificationFunctionArn:
-    Description: ARN of the UploadsNotificationFunction Lambda function
-    Value: !GetAtt UploadsNotificationFunction.Arn
