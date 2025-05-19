@@ -3,11 +3,6 @@ import {
     PublishCommand
 } from "@aws-sdk/client-sns";
 
-import {
-    SQSClient,
-    DeleteMessageCommand
-} from "@aws-sdk/client-sqs";
-
 const TOPIC_ARN_NAME = "arn:aws:sns:us-east-1:537124968674:Slava-UploadsNotificationTopic";
 const REGION = "us-east-1";
 
@@ -15,15 +10,11 @@ const sns = new SNSClient({
     region: REGION
 });
 
-const sqs = new SQSClient({
-    region: REGION
-});
-
 export const handler = async (event, context) => {
-    if (!event || !event.Records || event.Records.length === 0) {
+    if(!event) {
         return {
-            statusCode: 200,
-            body: JSON.stringify('No messages to process. Lambda function completed')
+            'statusCode': 200,
+            'body': JSON.stringify('No messages to process. Lambda function completed')
         };
     }
 
@@ -47,36 +38,19 @@ const processRecords = async (records) => {
         return 0;
     }
 
-    let processedCount = 0;
-
     for (const record of records) {
-        try {
-            if (!record.body) {
-                throw new Error('No body in SQS record.');
-            }
-
-            // Publish the message to the SNS topic
-            await sns.send(new PublishCommand({
-                TopicArn: TOPIC_ARN_NAME,
-                Subject: "Processed SQS Queue Messages",
-                Message: record.body
-            }));
-
-            console.log(`Message ${record.body} processed successfully.`);
-
-            // Delete the message from the SQS queue
-            await sqs.send(new DeleteMessageCommand({
-                QueueUrl: record.eventSourceARN, // The SQS queue URL
-                ReceiptHandle: record.receiptHandle // The receipt handle of the message
-            }));
-
-            console.log(`Message ${record.body} deleted successfully from SQS.`);
-
-            processedCount++;
-        } catch (error) {
-            console.error(`Failed to process message: ${record.body}. Error: ${error.message}`);
+        if (!record.body) {
+            throw new Error('no body in SQS record.');
         }
+        // Publish the message to the SNS topic
+        await sns.send(new PublishCommand({
+            TopicArn: TOPIC_ARN_NAME,
+            Subject: "Processed SQS Queue Messages",
+            Message: record.body
+        }));
+        
+        console.log('Message ${record.body} processed successfully.');
     }
-
-    return processedCount;
-};
+    
+    return records.length;
+}
