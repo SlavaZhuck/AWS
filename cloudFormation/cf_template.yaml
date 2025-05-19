@@ -477,3 +477,14 @@ Resources:
                   - ec2:UnassignPrivateIpAddresses
                 Resource: "*"
 
+  S3VPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcId: !Ref VPC
+      RouteTableIds:
+        - !Ref PublicRouteTable
+      VpcEndpointType: Gateway
+      Tags:
+        - Key: Name
+          Value: demo-s3-vpc-endpoint
