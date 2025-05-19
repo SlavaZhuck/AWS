@@ -32,7 +32,8 @@ export const handler = async (event, context) => {
     
     let inconsistencies = [];
 
-    return new Promise((resolve, reject) => {
+    // Wrap the existing logic in a Promise and await its resolution
+    const res = await new Promise((resolve, reject) => {
         dbConnection.query("SELECT * FROM " + TABLE_NAME, async function(err, rows, fields) {
             if (err) {
                 console.log('Error occured', err);
@@ -78,5 +79,10 @@ export const handler = async (event, context) => {
             });
         });
     });
-};
 
+    // Log the resolved value
+    console.log('Resolved to', res);
+
+    // Return the resolved value
+    return res;
+};
