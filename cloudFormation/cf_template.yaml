@@ -395,7 +395,10 @@ Resources:
         S3Bucket: demobucket-test-for-rds
         S3Key: firstLambda.zip
       Timeout: 12
-
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref SlavaUploadsNotificationTopic
+          QUEUE_URL: !Ref SlavaUploadsNotificationQueue
   # Lambda Permission for SQS Trigger (UploadsNotificationFunction)
   UploadsNotificationFunctionSQSPermission:
     Type: AWS::Lambda::Permission
