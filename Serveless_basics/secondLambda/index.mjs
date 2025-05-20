@@ -62,8 +62,9 @@ export const handler = async (event, context) => {
                     }));
 
                     console.log(`Step 6: S3 object found for key: ${rows[i].name}. Validating size...`);
-                    if (data.ContentLength != rows[i].size) {
+                    if (data.ContentLength != rows[i].image_size) {
                         console.warn(`Inconsistency found: Size mismatch for object ${rows[i].name}.`);
+						console.log(`S3 object size: ${data.ContentLength}, Database size: ${rows[i].image_size}`);
                         inconsistencies.push({
                             'object': rows[i].name,
                             'bucket': BUCKET,
