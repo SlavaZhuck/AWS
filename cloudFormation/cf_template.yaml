@@ -382,7 +382,69 @@ Resources:
           - !Ref PublicSubnetB
         SecurityGroupIds:
           - !Ref SecurityGroup
-        
+  DataConsistencyFunctionTrigger:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: DataConsistencyFunctionTrigger
+      ScheduleExpression: "rate(5 seconds)" # Trigger every 5 seconds
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt DataConsistencyFunction.Arn
+          Id: DataConsistencyFunctionTarget
+    DependsOn: DataConsistencyFunction
+
+  DataConsistencyFunctionPermissionForEvents:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DataConsistencyFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DataConsistencyFunctionTrigger.Arn
+
+  # API Gateway REST API
+  DataConsistencyApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: DataConsistencyApi
+      Description: API Gateway to trigger the DataConsistencyFunction Lambda function
+
+  DataConsistencyApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt DataConsistencyApi.RootResourceId
+      PathPart: trigger
+      RestApiId: !Ref DataConsistencyApi
+
+  DataConsistencyApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: GET
+      AuthorizationType: NONE
+      RestApiId: !Ref DataConsistencyApi
+      ResourceId: !Ref DataConsistencyApiResource
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DataConsistencyFunction.Arn}/invocations
+
+  DataConsistencyFunctionPermissionForApi:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DataConsistencyFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub
+        arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${DataConsistencyApi}/*/GET/trigger
+
+  # API Gateway Deployment and Stage
+  DataConsistencyApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref DataConsistencyApi
+      StageName: prod
+    DependsOn: DataConsistencyApiMethod
+    
   # Lambda Function: UploadsNotificationFunction
   UploadsNotificationFunction:
     Type: AWS::Lambda::Function
