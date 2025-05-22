@@ -386,7 +386,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Name: DataConsistencyFunctionTrigger
-      ScheduleExpression: "rate(5 seconds)" # Trigger every 5 seconds
+      ScheduleExpression: "rate(5 minutes)" # Trigger every 5 seconds
       State: ENABLED
       Targets:
         - Arn: !GetAtt DataConsistencyFunction.Arn
