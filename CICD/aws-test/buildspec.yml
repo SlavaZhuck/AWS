@@ -1,0 +1,24 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto21
+  pre_build:
+    commands:
+      - VERSION=$(grep "projectVersion" gradle.properties | awk -F'=' '{print $2}' | tr -d ' ')
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo "Project Version -> $VERSION"
+      - gradle test
+      - gradle build
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - sam package --s3-bucket aliaksei-tkachuk-bucket --template-file samTemplate.yml --output-template-file outputSamTemplate.yml
+      - ls -la build/libs
+artifacts:
+  files:
+    - build/libs/aliakseitkachuk-$VERSION.jar
+    - outputSamTemplate.yml

@@ -1,0 +1,49 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.0.11'
+    id 'io.spring.dependency-management' version '1.1.3'
+}
+
+group = 'com.tkachuk.aws'
+version = "${projectVersion}"
+
+java {
+    sourceCompatibility = '21'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    //SPRING
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-hateoas'
+
+    implementation "mysql:mysql-connector-java:${mysqlVersion}"  //MySQL connector
+
+//    implementation group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.12.566' //AWS
+
+    implementation "com.amazonaws:aws-java-sdk-s3:${awsSdkVersion}" //s3
+    implementation "com.amazonaws:aws-java-sdk-sns:${awsSdkVersion}" //sns
+    implementation "com.amazonaws:aws-java-sdk-sqs:${awsSdkVersion}" //sqs
+    implementation "com.amazonaws:aws-java-sdk-lambda:${awsSdkVersion}" //lambda
+
+
+    //Lombok
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    // in annotationProcessorPaths Lombok tag is BEFORE the Mapstruct!
+
+    //Mapstruct
+    implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+    implementation "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
