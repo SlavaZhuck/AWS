@@ -10,8 +10,8 @@ import {
 
 // const TOPIC_ARN_NAME = process.env.SNS_TOPIC_ARN;
 // const QUEUE_URL = process.env.QUEUE_URL; // Use the queue URL instead of the ARN
-const TOPIC_ARN_NAME = arn:aws:sns:us-east-1:537124968674:Slava-UploadsNotificationTopic;
-const QUEUE_URL = arn:aws:sqs:us-east-1:537124968674:Slava-UploadsNotificationQueue; // Use the queue URL instead of the ARN
+const TOPIC_ARN_NAME = "arn:aws:sns:us-east-1:537124968674:Slava-UploadsNotificationTopic";
+const QUEUE_URL = "arn:aws:sqs:us-east-1:537124968674:Slava-UploadsNotificationQueue"; // Use the queue URL instead of the ARN
 const REGION = "us-east-1";
 
 const sns = new SNSClient({ region: REGION });
