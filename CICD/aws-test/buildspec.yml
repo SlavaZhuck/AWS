@@ -16,9 +16,9 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
-      - sam package --s3-bucket aliaksei-tkachuk-bucket --template-file samTemplate.yml --output-template-file outputSamTemplate.yml
+      - sam package --s3-bucket demobucket-test-for-rds --template-file samTemplate.yml --output-template-file outputSamTemplate.yml
       - ls -la build/libs
 artifacts:
   files:
-    - build/libs/aliakseitkachuk-$VERSION.jar
+    - build/libs/zhukviachaslau-$VERSION.jar
     - outputSamTemplate.yml
